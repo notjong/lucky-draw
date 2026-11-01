@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>럭키 드로우</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<p id="storage-notice" class="notice" hidden>이 브라우저에서는 진행 상태가 저장되지 않습니다. 새로고침하면 처음부터 다시 해야 합니다.</p>
+
+<section id="screen-resume" class="screen" hidden>
+  <div class="panel narrow">
+    <h1>저장된 추첨이 있습니다</h1>
+    <p id="resume-summary"></p>
+    <div class="row">
+      <button id="btn-resume" class="primary">이어서 하기</button>
+      <button id="btn-fresh">새로 시작</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-setup" class="screen" hidden>
+  <header class="bar"><h1>준비</h1></header>
+  <div class="setup-grid">
+    <div class="panel">
+      <h2>참가자</h2>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-names" aria-selected="true">이름 붙여넣기</button>
+        <button role="tab" id="tab-range" aria-selected="false">번호 범위</button>
+      </div>
+      <div id="pane-names">
+        <label for="names-input">한 줄에 한 명, 또는 쉼표로 구분</label>
+        <textarea id="names-input" rows="6"></textarea>
+        <button id="btn-add-names">등록</button>
+      </div>
+      <div id="pane-range" hidden>
+        <div class="row">
+          <label>시작 <input id="range-start" type="number" value="1" min="0"></label>
+          <label>끝 <input id="range-end" type="number" value="100" min="0"></label>
+        </div>
+        <button id="btn-add-range">등록</button>
+      </div>
+      <p id="participant-msg" class="msg" role="status"></p>
+      <div class="list-head">
+        <span>등록 <b id="participant-count" class="num">0</b>명</span>
+        <button id="btn-clear-participants" class="link">전체 삭제</button>
+      </div>
+      <ul id="participant-list" class="chips"></ul>
+    </div>
+
+    <div class="panel">
+      <h2>경품</h2>
+      <div id="prize-rows"></div>
+      <button id="btn-add-prize">경품 추가</button>
+      <p id="prize-msg" class="msg" role="status"></p>
+
+      <h2>방식</h2>
+      <fieldset>
+        <legend>차례 순서</legend>
+        <label><input type="radio" name="order" value="input" checked> 입력 순서대로</label>
+        <label><input type="radio" name="order" value="random"> 무작위</label>
+      </fieldset>
+      <fieldset>
+        <legend>꽝이 나오면</legend>
+        <label><input type="radio" name="loseRule" value="consume" checked> 기회 소진</label>
+        <label><input type="radio" name="loseRule" value="requeue"> 대기열 맨 뒤로</label>
+      </fieldset>
+      <p id="start-msg" class="msg" role="status"></p>
+      <button id="btn-start" class="primary big">추첨 시작</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-draw" class="screen" hidden>
+  <div class="draw-grid">
+    <div class="wheel-wrap">
+      <div class="pointer" aria-hidden="true"></div>
+      <canvas id="wheel" aria-label="원판"></canvas>
+    </div>
+    <aside class="side">
+      <div class="turn">
+        <span class="label">지금 차례</span>
+        <div id="current-name" class="current-name">-</div>
+        <div class="meta">남은 참가자 <b id="left-participants" class="num">0</b>명</div>
+      </div>
+      <button id="btn-spin" class="primary big">돌리기</button>
+      <div class="row">
+        <button id="btn-skip">불참</button>
+        <button id="btn-undo">되돌리기</button>
+      </div>
+      <div class="remaining">
+        <span class="label">남은 경품</span>
+        <ul id="prize-left"></ul>
+      </div>
+      <div id="legend-box" hidden>
+        <span class="label">칸 번호</span>
+        <ol id="legend"></ol>
+      </div>
+      <div class="row foot">
+        <label class="check"><input type="checkbox" id="sound-toggle"> 소리</label>
+        <button id="btn-back-setup" class="link">준비 화면으로</button>
+      </div>
+    </aside>
+  </div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+</section>
+
+<dialog id="result-dialog">
+  <p id="result-who" class="result-who"></p>
+  <p id="result-what" class="result-what"></p>
+  <button id="btn-next" class="primary big" autofocus>다음 사람</button>
+</dialog>
+
+<section id="screen-result" class="screen" hidden>
+  <header class="bar">
+    <h1>추첨 결과</h1>
+    <div class="row">
+      <button id="btn-undo-result">되돌리기</button>
+      <button id="btn-csv">CSV 저장</button>
+      <button id="btn-copy">복사</button>
+      <button id="btn-reset">전체 초기화</button>
+    </div>
+  </header>
+  <div class="panel wide">
+    <p id="end-note" class="end-note"></p>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-winners" aria-selected="true">당첨자</button>
+      <button role="tab" id="tab-others" aria-selected="false">꽝·불참</button>
+    </div>
+    <table id="table-winners"><thead><tr><th>순번</th><th>참가자</th><th>경품</th><th>시각</th></tr></thead><tbody></tbody></table>
+    <table id="table-others" hidden><thead><tr><th>순번</th><th>참가자</th><th>구분</th><th>시각</th></tr></thead><tbody></tbody></table>
+    <div id="unclaimed" hidden>
+      <h2>남은 경품</h2>
+      <ul id="unclaimed-list"></ul>
+    </div>
+    <p id="result-msg" class="msg" role="status"></p>
+  </div>
+</section>
+
+<script src="js/core.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
